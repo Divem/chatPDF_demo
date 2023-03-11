@@ -1,0 +1,26 @@
+import docx
+doc = docx.Document("example.docx") # 打开文档文件
+paragraphs = [] # 存储文档段落列表
+for para in doc.paragraphs:
+    paragraphs.append(para.text) # 将每个段落的文本添加到列表中
+
+import zipfile
+import xml.etree.ElementTree as ET
+doc = zipfile.ZipFile("example.docx") # 打开文档文件
+xml_content = doc.read("word/document.xml") # 读取XML内容
+tree = ET.fromstring(xml_content) # 解析XML内容为树结构
+paragraphs = [] # 存储文档段落列表
+for paragraph in tree.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p"): # 遍历所有p标签（代表段落）
+    texts = [node.text for node in paragraph.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t")] # 获取每个段落中所有t标签（代表文本）的内容
+    paragraphs.append("".join(texts)) # 将每个段落的文本拼接起来并添加到列表中
+
+
+import subprocess
+
+def document_to_text(filename):
+    cmd = ["antiword", filename] # 设置命令行参数（第一个是antiword程序名，第二个是要转换的doc文件名）
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE) # 创建一个子进程并执行命令行参数指定的程序，并将标准输出重定向到管道中
+    stdout, stderr = p.communicate() # 等待子进程结束并获取标准输出和错误输出（如果有）
+    return stdout.decode("ascii", "ignore") # 将标准输出从字节流转换为字符串，并忽略无法解码的字符
+
+paragraphs = document_to_text("example.doc").split("\n") # 调用函数并获取纯文本内容，并按换行符切分段落
